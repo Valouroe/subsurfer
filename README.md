@@ -29,3 +29,24 @@ How to run locally:
     6. Run the application: python app.py
     7. Open browser and navigate to: ……… (not done yet)
 
+Contributions
+---
+Branch Naming Conventions: 
+
+    New Features: feature/"feature name"
+    Fixes: fix/"feature being fixed"
+    Updates/Improvements: update/"feature being updated"
+    
+
+
+Pull request (Pull Request) rules:
+
+    No self-merging
+    At least 1 reviewer approval
+    Link Pull Request to an issue
+
+Definition of Done (DoD) for PRs:
+
+    Builds/runs
+    Tests pass (even if minimal)
+    README updated if behavior/setup changed
