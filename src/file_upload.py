@@ -1,4 +1,6 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
+import pandas as pd
+import io
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -12,10 +14,26 @@ def upload_csv():
 
     # Validate if file is present
     if not file:
-        return "No file uploaded", 400
+        return jsonify({"error": "No file found"}), 400
+
+    try:
+        #Read the file stream into a DataFrame
+        df = pd.read_csv(io.BytesIO(file.read()))
+
+        # Get row count and column names
+        row_count = len(df)
+        columns = df.columns.tolist()
+
+        # Return a JSON response instead of a plain string
+        return jsonify({
+            "status": "success",
+            "filename": file.filename,
+            "rows_processed": row_count,
+            "headers": columns
+        }), 200
     
-    # Return the filename as confirmation
-    return f"Received: {file.filename}"
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 # Run the Flask application
 if __name__ == '__main__':

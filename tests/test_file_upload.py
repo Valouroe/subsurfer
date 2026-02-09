@@ -13,9 +13,12 @@ def test_csv_upload():
         files = {'my_file': f} # 'my_file' should match the key expected by the server
         response = requests.post(url, files=files)
     
+    data = response.json()
+
     # Assertions check if the code actually did what we expected
-    assert response.status_code == 200
-    assert "Received: test-Statement.csv" in response.text # statement output by file_upload.py
+    assert data["status"] == "success"
+    assert data["filename"] == "test-Statement.csv"
+    assert "rows_processed" in data
     
     print("Test Passed: File uploaded and filename acknowledged.")
 
