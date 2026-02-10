@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subsurfer - Subscription Detector</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: white;
+    }
+
+    /* Center the button */
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    h1 {
+      font-family: Arial, sans-serif;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    /* Button container for positioning tooltip */
+    .button-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    /* Hide the actual file input */
+    #fileInput {
+      display: none;
+    }
+
+    /* Upload Button CSS */
+    .upload-bt {
+      align-items: center;
+      background-image: linear-gradient(144deg,#AF40FF, #5B42F3 50%,#00DDEB);
+      border: 0;
+      border-radius: 8px;
+      box-shadow: rgba(151, 65, 252, 0.2) 0 15px 30px -5px;
+      box-sizing: border-box;
+      color: #FFFFFF;
+      display: flex;
+      font-family: Phantomsans, sans-serif;
+      font-size: 20px;
+      justify-content: center;
+      line-height: 1em;
+      max-width: 100%;
+      min-width: 140px;
+      padding: 3px;
+      text-decoration: none;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .upload-bt:active,
+    .upload-bt:hover {
+      outline: 0;
+    }
+
+    .upload-bt span {
+      background-color: rgb(5, 6, 45);
+      padding: 16px 24px;
+      border-radius: 6px;
+      width: 100%;
+      height: 100%;
+      transition: 300ms;
+    }
+
+    .upload-bt:hover span {
+      background: none;
+    }
+
+    /* Tooltip styles */
+    .tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      background-color: #333;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 300ms, transform 300ms;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+
+    /* Tooltip arrow */
+    .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #333;
+    }
+
+    /* Show tooltip on hover */
+    .button-container:hover .tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-5px);
+    }
+
+    /* Status message */
+    .status {
+      font-family: Arial, sans-serif;
+      color: #666;
+      font-size: 14px;
+      margin-top: 10px;
+      min-height: 20px;
+    }
+
+    /* Loading spinner */
+    .loading {
+      display: none;
+      font-family: Arial, sans-serif;
+      color: #5B42F3;
+      font-size: 14px;
+    }
+
+    /* Results section */
+    .results {
+      display: none;
+      margin-top: 30px;
+      padding: 20px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      max-width: 600px;
+      font-family: Arial, sans-serif;
+    }
+
+    .results h2 {
+      color: #5B42F3;
+      margin-top: 0;
+    }
+
+    .subscription-item {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border-left: 4px solid #5B42F3;
+    }
+
+    @media (min-width: 768px) {
+      .upload-bt {
+        font-size: 24px;
+        min-width: 196px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Subscription Detector</h1>
+<p style="font-family: Arial, sans-serif; color: #666;">Upload your bank statement to find hidden subscriptions</p>
+
+<!-- Hidden file input -->
+<input type="file" id="fileInput" accept=".csv">
+
+<div class="button-container">
+  <div class="tooltip">Upload CSV</div>
+  <button class="upload-bt" onclick="document.getElementById('fileInput').click()">
+    <span>Upload</span>
+  </button>
+</div>
+
+<div class="status" id="status"></div>
+<div class="loading" id="loading">⏳ Analyzing your transactions...</div>
+
+<!-- Results will appear here -->
+<div class="results" id="results"></div>
+
+<script>
+  // Handle file selection
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const statusDiv = document.getElementById('status');
+    const loadingDiv = document.getElementById('loading');
+    const resultsDiv = document.getElementById('results');
+
+    if (file) {
+      // Check if it's a CSV file
+      if (file.name.endsWith('.csv')) {
+        statusDiv.textContent = `✅ Selected: ${file.name}`;
+        statusDiv.style.color = '#5B42F3';
+
+        // Upload to backend
+        uploadToBackend(file);
+      } else {
+        statusDiv.textContent = '❌ Please select a CSV file';
+        statusDiv.style.color = '#ff4444';
+      }
+    }
+  });
+
+  // Function to send file to Flask backend
+  function uploadToBackend(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Show loading state
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+
+    // Send to your Python backend
+    fetch('/upload', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Hide loading
+      document.getElementById('loading').style.display = 'none';
+
+      // Display results
+      displayResults(data);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('status').textContent = '❌ Error processing file';
+      document.getElementById('status').style.color = '#ff4444';
+    });
+  }
+
+  // Function to display subscription results
+  function displayResults(data) {
+    const resultsDiv = document.getElementById('results');
+
+    if (data.subscriptions && data.subscriptions.length > 0) {
+      let html = '<h2>Found Subscriptions:</h2>';
+
+      data.subscriptions.forEach(sub => {
+        html += `
+          <div class="subscription-item">
+            <strong>${sub.name}</strong><br>
+            Amount: $${sub.amount}<br>
+            Frequency: ${sub.frequency}
+          </div>
+        `;
+      });
+
+      resultsDiv.innerHTML = html;
+      resultsDiv.style.display = 'block';
+    } else {
+      resultsDiv.innerHTML = '<h2>No subscriptions detected</h2>';
+      resultsDiv.style.display = 'block';
+    }
+  }
+</script>
+
+</body>
+</html>
