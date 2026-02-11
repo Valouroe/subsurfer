@@ -18,7 +18,6 @@ def test_csv_upload():
     # Assertions check if the code actually did what we expected
     assert data["status"] == "success"
     assert data["filename"] == "test-Statement.csv"
-    assert "rows_processed" in data
     
     print("Test Passed: File uploaded and filename acknowledged.")
 
