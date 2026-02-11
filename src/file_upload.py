@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import pandas as pd
 import io
+from category_grouping import sort_by_month
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -18,18 +19,12 @@ def upload_csv():
 
     try:
         #Read the file stream into a DataFrame
-        df = pd.read_csv(io.BytesIO(file.read()))
-
-        # Get row count and column names
-        row_count = len(df)
-        columns = df.columns.tolist()
+        sorted_data = sort_by_month(io.BytesIO(file.read()))
 
         # Return a JSON response instead of a plain string
         return jsonify({
             "status": "success",
             "filename": file.filename,
-            "rows_processed": row_count,
-            "headers": columns
         }), 200
     
     except Exception as e:

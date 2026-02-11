@@ -1,3 +1,19 @@
+import pandas as pd
+
+def sort_by_month(file):
+    df = pd.read_csv(file)
+
+    df['Date'] = pd.to_datetime(df['Date'])
+    df['Month'] = df['Date'].dt.strftime('%B %Y')
+
+    monthly_data = {}
+
+    for month, group in df.groupby('Month', sort=False):
+        # Convert each month’s transactions to dictionaries
+        monthly_data[month] = group.drop(columns=['Month']).to_dict(orient='records')
+
+    return monthly_data
+
 def group_by_category(monthly_data):
     service_map = {}
 
