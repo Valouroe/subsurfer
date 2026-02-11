@@ -2,7 +2,7 @@ from src.category_grouping import group_by_category
 
 def test_group_by_category_returns_grouped_transactions():
     monthly_data = {
-        "2025-01": [
+        "January 2025": [
             {"date": "2025-01-01", "amount": 3200.00, "category": "deposit", "service": "Income"},
             {"date": "2025-01-01", "amount": -1200.00, "category": "withdrawal", "service": "Bills"},
             {"date": "2025-01-02", "amount": -15.99, "category": "withdrawal", "service": "Services"},
@@ -28,7 +28,7 @@ def test_group_by_category_returns_grouped_transactions():
 
 def test_group_by_category_counts_are_correct():
     monthly_data = {
-        "2025-01": [
+        "January 2025": [
             {"category": "deposit", "service": "Income"},
             {"category": "withdrawal", "service": "Bills"},
             {"category": "withdrawal", "service": "Services"},
