@@ -19,8 +19,8 @@ def group_by_category(monthly_data):
 
     for month, transactions in monthly_data.items():
         for tx in transactions:
-            if tx["category"] == "withdrawal":
-                service = tx["service"]
+            if tx["Category"] == "Withdrawal":
+                service = tx["Service"]
                 if service not in service_map:
                     service_map[service] = []
                 service_map[service].append(tx)
