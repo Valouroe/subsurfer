@@ -51,12 +51,14 @@ def upload_file():
             print(f"Category data created: {len(category_data)} categories")
 
             subscription_data = subscription_by_service(category_data)
-            print(f"Subscription data created: {len(subscription_data)} subscriptions")
+            print(f"Subscription data created: {len(subscription_data[0])} subscriptions")
 
             return jsonify({
                 'success': True,
-                'filename': filename, 
-                'subscription_data': dict(subscription_data) 
+                'filename': filename,
+                'start_date': subscription_data[1],
+                'end_date': subscription_data[2], 
+                'subscription_data': dict(subscription_data[0])
             }), 200
             
         except Exception as e:

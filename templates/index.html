@@ -186,11 +186,9 @@
 <div class="status" id="status"></div>
 <div class="loading" id="loading">⏳ Analyzing your transactions...</div>
 
-<!-- Results will appear here -->
 <div class="results" id="results"></div>
 
 <script>
-  // Handle file selection
   document.getElementById('fileInput').addEventListener('change', function(e) {
     const file = e.target.files[0];
     const statusDiv = document.getElementById('status');

@@ -34,6 +34,8 @@ def subscription_by_service(service_map):
     history = {} 
 
     all_tx = [tx for transactions in service_map.values() for tx in transactions]
+    start_date = min(tx['Date'] for tx in all_tx)
+    end_date = max(tx['Date'] for tx in all_tx)
 
     # Loop through all transactions
     for tx in all_tx:
@@ -101,4 +103,4 @@ def subscription_by_service(service_map):
         data['Next_Payment'] = next_date.strftime('%Y-%m-%d')
         data['Last_Date'] = last_date.strftime('%Y-%m-%d')
             
-    return subscriptions
+    return subscriptions, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
