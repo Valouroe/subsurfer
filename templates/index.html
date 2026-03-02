@@ -82,187 +82,286 @@
       background: none;
     }
 
-    /* Tooltip styles */
-    .tooltip {
-      position: absolute;
-      bottom: 100%;
-      left: 50%;
-      transform: translateX(-50%) translateY(-10px);
-      background-color: #333;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-      white-space: nowrap;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 300ms, transform 300ms;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      z-index: 1000;
-    }
-
-    /* Tooltip arrow */
-    .tooltip::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      border: 6px solid transparent;
-      border-top-color: #333;
-    }
-
-    /* Show tooltip on hover */
-    .button-container:hover .tooltip {
-      opacity: 1;
-      transform: translateX(-50%) translateY(-5px);
-    }
-
-    /* Status message */
-    .status {
-      font-family: Arial, sans-serif;
-      color: #666;
-      font-size: 14px;
-      margin-top: 10px;
-      min-height: 20px;
-    }
-
-    /* Loading spinner */
-    .loading {
-      display: none;
-      font-family: Arial, sans-serif;
-      color: #5B42F3;
-      font-size: 14px;
-    }
-
-    /* Results section */
     .results {
       display: none;
       margin-top: 30px;
-      padding: 20px;
-      background: #f5f5f5;
-      border-radius: 8px;
-      max-width: 600px;
+      padding: 25px;
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 900px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
       font-family: Arial, sans-serif;
     }
 
     .results h2 {
       color: #5B42F3;
       margin-top: 0;
+      font-size: 1.5rem;
+      border-bottom: 2px solid #f0f0f0;
+      padding-bottom: 10px;
     }
 
-    .subscription-item {
-      background: white;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 6px;
-      border-left: 4px solid #5B42F3;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
     }
 
-    @media (min-width: 768px) {
-      .upload-bt {
-        font-size: 24px;
-        min-width: 196px;
-      }
+    th {
+      text-align: left;
+      background: #f8f9fa;
+      padding: 12px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #666;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 15px 12px;
+      border-bottom: 1px solid #eee;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .badge {
+      background: #eef2ff;
+      color: #5B42F3;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .total-spent {
+      color: #5B42F3;
+      font-weight: bold;
+    }
+
+    .summary-card {
+      margin-top: 20px;
+      background: #5B42F3;
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
 
 <h1>Subscription Detector</h1>
-<p style="font-family: Arial, sans-serif; color: #666;">Upload your bank statement to find hidden subscriptions</p>
+<p style="font-family: Arial, sans-serif; color: #666;">Upload your bank statement to reveal your recurring costs</p>
 
-<!-- Hidden file input -->
 <input type="file" id="fileInput" accept=".csv">
 
 <div class="button-container">
-  <div class="tooltip">Upload CSV</div>
   <button class="upload-bt" onclick="document.getElementById('fileInput').click()">
-    <span>Upload</span>
+    <span>Upload CSV</span>
   </button>
 </div>
 
 <div class="status" id="status"></div>
-<div class="loading" id="loading">⏳ Analyzing your transactions...</div>
+<div id="loading" style="display:none; margin-top: 20px; font-family: Arial;">⏳ Analyzing transactions...</div>
 
 <div class="results" id="results"></div>
 
 <script>
+  // Currency Formatter
+  const moneyFormatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2
+  });
+
   document.getElementById('fileInput').addEventListener('change', function(e) {
     const file = e.target.files[0];
     const statusDiv = document.getElementById('status');
-    const loadingDiv = document.getElementById('loading');
-    const resultsDiv = document.getElementById('results');
-
-    if (file) {
-      // Check if it's a CSV file
-      if (file.name.endsWith('.csv')) {
-        statusDiv.textContent = `✅ Selected: ${file.name}`;
-        statusDiv.style.color = '#5B42F3';
-
-        // Upload to backend
-        uploadToBackend(file);
-      } else {
-        statusDiv.textContent = '❌ Please select a CSV file';
-        statusDiv.style.color = '#ff4444';
-      }
+    
+    if (file && file.name.endsWith('.csv')) {
+      statusDiv.innerHTML = `✅ <b>${file.name}</b> selected`;
+      statusDiv.style.color = '#5B42F3';
+      uploadToBackend(file);
+    } else {
+      statusDiv.textContent = '❌ Please select a valid CSV file';
+      statusDiv.style.color = '#ff4444';
     }
   });
 
-  // Function to send file to Flask backend
   function uploadToBackend(file) {
     const formData = new FormData();
     formData.append('file', file);
 
-    // Show loading state
     document.getElementById('loading').style.display = 'block';
     document.getElementById('results').style.display = 'none';
 
-    // Send to your Python backend
     fetch('/upload', {
       method: 'POST',
       body: formData
     })
     .then(response => response.json())
     .then(data => {
-      // Hide loading
       document.getElementById('loading').style.display = 'none';
-
-      // Display results
-      displayResults(data);
+      
+      // Based on your specific Backend return keys:
+      // data.start_date -> subscription_data[1]
+      // data.end_date   -> subscription_data[2]
+      // data.subscription_data -> dict(subscription_data)[0]
+      if (data.success && data.subscription_data) {
+        displayResults(data);
+      } else {
+        displayResults(null);
+      }
     })
     .catch(error => {
       console.error('Error:', error);
       document.getElementById('loading').style.display = 'none';
-      document.getElementById('status').textContent = '❌ Error processing file';
-      document.getElementById('status').style.color = '#ff4444';
+      document.getElementById('status').textContent = '❌ Connection Error';
     });
   }
 
-  // Function to display subscription results
   function displayResults(data) {
     const resultsDiv = document.getElementById('results');
-
-    if (data.subscriptions && data.subscriptions.length > 0) {
-      let html = '<h2>Found Subscriptions:</h2>';
-
-      data.subscriptions.forEach(sub => {
-        html += `
-          <div class="subscription-item">
-            <strong>${sub.name}</strong><br>
-            Amount: $${sub.amount}<br>
-            Frequency: ${sub.frequency}
-          </div>
-        `;
-      });
-
-      resultsDiv.innerHTML = html;
+    
+    if (!data || !data.subscription_data || Object.keys(data.subscription_data).length === 0) {
+      resultsDiv.innerHTML = '<h2>No recurring subscriptions found</h2>';
       resultsDiv.style.display = 'block';
-    } else {
-      resultsDiv.innerHTML = '<h2>No subscriptions detected</h2>';
-      resultsDiv.style.display = 'block';
+      return;
     }
+
+    const subs = data.subscription_data;
+    let tableRows = '';
+
+    // 1. Precise Date Range Calculation using start_date and end_date keys
+    let timeRangeText = "Statement period unavailable";
+    if (data.start_date && data.end_date) {
+      const start = new Date(data.start_date);
+      const end = new Date(data.end_date);
+      
+      if (!isNaN(start) && !isNaN(end)) {
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        
+        timeRangeText = `${start.toLocaleDateString(undefined, options)} to ${end.toLocaleDateString(undefined, options)} (${diffDays} days covered)`;
+      }
+    }
+
+    // 2. Build table rows using data-attributes for live calculation
+    Object.entries(subs).forEach(([name, info]) => {
+      const paymentVal = parseFloat(info.Payment) || 0;
+      const totalVal = parseFloat(info.Total) || 0;
+      const interval = (info.Interval || 'Monthly').toLowerCase();
+
+      // Normalize to monthly burn rate
+      let monthlyEst = 0;
+      if (interval.includes('year')) monthlyEst = paymentVal / 12;
+      else if (interval.includes('week')) monthlyEst = paymentVal * 4.33;
+      else monthlyEst = paymentVal;
+
+      tableRows += `
+        <tr class="sub-row" style="transition: all 0.2s;">
+          <td style="text-align: center;">
+            <input type="checkbox" class="sub-checkbox" checked 
+                   data-total="${totalVal}" 
+                   data-monthly="${monthlyEst}"
+                   onclick="updateTotal()">
+          </td>
+          <td><b>${name}</b></td>
+          <td><span class="badge">${info.Interval}</span></td>
+          <td>${moneyFormatter.format(paymentVal)}</td>
+          <td style="color: #666; font-size: 13px;">${info.Next_Payment || 'N/A'}</td>
+          <td class="total-spent" style="font-weight: bold; color: #5B42F3;">${moneyFormatter.format(totalVal)}</td>
+        </tr>
+      `;
+    });
+
+    resultsDiv.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px;">
+        <h2 style="margin: 0;">Found Subscriptions</h2>
+        <span style="font-size: 15px; color: #888; background: #eee; padding: 4px 10px; border-radius: 20px;">
+          🗓️${timeRangeText}
+        </span>
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <button onclick="toggleAll(true)" style="font-size: 11px; cursor: pointer; border: 1px solid #ddd; background: white; border-radius: 4px; padding: 4px 12px;">Select All</button>
+        <button onclick="toggleAll(false)" style="font-size: 11px; cursor: pointer; border: 1px solid #ddd; background: white; border-radius: 4px; padding: 4px 12px;">Deselect All</button>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 40px;"></th>
+              <th>Service</th>
+              <th>Interval</th>
+              <th>Payment</th>
+              <th>Next Payment Date</th>
+              <th>Total Cost</th>
+            </tr>
+          </thead>
+          <tbody id="subscription-body">${tableRows}</tbody>
+        </table>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px;">
+        <div style="background: #f0f0ff; padding: 15px; border-radius: 8px; border-left: 4px solid #AF40FF;">
+          <div style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Monthly Expense</div>
+          <div id="monthly-average-display" style="font-size: 20px; font-weight: bold; color: #333;">$0.00</div>
+        </div>
+        <div style="background: #f0f0ff; padding: 15px; border-radius: 8px; border-left: 4px solid #00DDEB;">
+          <div style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Yearly Expense</div>
+          <div id="yearly-average-display" style="font-size: 20px; font-weight: bold; color: #333;">$0.00</div>
+        </div>
+      </div>
+
+      <div class="summary-card" style="margin-top: 15px;">
+        <span>Selected Total Cost:</span>
+        <span id="grand-total-display" style="font-size: 24px; font-weight: bold;">$0.00</span>
+      </div>
+    `;
+    
+    resultsDiv.style.display = 'block';
+    updateTotal();
+  }
+
+  function updateTotal() {
+    let lifetimeTotal = 0;
+    let monthlyBurn = 0;
+    const checkboxes = document.querySelectorAll('.sub-checkbox');
+    
+    checkboxes.forEach(cb => {
+      const row = cb.closest('tr');
+      if (cb.checked) {
+        lifetimeTotal += parseFloat(cb.getAttribute('data-total'));
+        monthlyBurn += parseFloat(cb.getAttribute('data-monthly'));
+        row.style.opacity = "1";
+        row.style.filter = "grayscale(0)";
+      } else {
+        row.style.opacity = "0.4";
+        row.style.filter = "grayscale(1)";
+      }
+    });
+
+    document.getElementById('grand-total-display').textContent = moneyFormatter.format(lifetimeTotal);
+    document.getElementById('monthly-average-display').textContent = moneyFormatter.format(monthlyBurn);
+    document.getElementById('yearly-average-display').textContent = moneyFormatter.format(monthlyBurn * 12);
+  }
+
+  function toggleAll(checked) {
+    document.querySelectorAll('.sub-checkbox').forEach(cb => cb.checked = checked);
+    updateTotal();
   }
 </script>
 
