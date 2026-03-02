@@ -3,10 +3,10 @@ from src.category_grouping import group_by_category
 def test_group_by_category_returns_grouped_transactions():
     monthly_data = {
         "January 2025": [
-            {"date": "2025-01-01", "amount": 3200.00, "category": "deposit", "service": "Income"},
-            {"date": "2025-01-01", "amount": -1200.00, "category": "withdrawal", "service": "Bills"},
-            {"date": "2025-01-02", "amount": -15.99, "category": "withdrawal", "service": "Services"},
-            {"date": "2025-01-08", "amount": -12.50, "category": "withdrawal", "service": "Food"},
+            {"date": "2025-01-01", "Amount": 3200.00, "Category": "Deposit", "Service": "Income"},
+            {"date": "2025-01-01", "Amount": -1200.00, "Category": "Withdrawal", "Service": "Bills"},
+            {"date": "2025-01-02", "Amount": -15.99, "Category": "Withdrawal", "Service": "Services"},
+            {"date": "2025-01-08", "Amount": -12.50, "Category": "Withdrawal", "Service": "Food"},
         ]
     }
 
@@ -22,25 +22,25 @@ def test_group_by_category_returns_grouped_transactions():
 
     # Ensure full transaction data is preserved
     bills_tx = result["Bills"][0]
-    assert bills_tx["amount"] == -1200.00
-    assert bills_tx["category"] == "withdrawal"
+    assert bills_tx["Amount"] == 1200.00
+    assert bills_tx["Category"] == "Withdrawal"
 
 
 def test_group_by_category_counts_are_correct():
     monthly_data = {
         "January 2025": [
-            {"category": "deposit", "service": "Income"},
-            {"category": "withdrawal", "service": "Bills"},
-            {"category": "withdrawal", "service": "Services"},
-            {"category": "withdrawal", "service": "Bills"},
-            {"category": "withdrawal", "service": "Food"},
-            {"category": "withdrawal", "service": "Memberships"},
-            {"category": "withdrawal", "service": "Services"},
-            {"category": "withdrawal", "service": "Food"},
-            {"category": "withdrawal", "service": "Bills"},
-            {"category": "withdrawal", "service": "Food"},
-            {"category": "withdrawal", "service": "Miscellaneous"},
-            {"category": "withdrawal", "service": "Food"},
+            {"Category": "Deposit", "Service": "Income", "Amount": 1000},
+            {"Category": "Withdrawal", "Service": "Bills", "Amount": -50},
+            {"Category": "Withdrawal", "Service": "Services", "Amount": -20},
+            {"Category": "Withdrawal", "Service": "Bills", "Amount": -30},
+            {"Category": "Withdrawal", "Service": "Food", "Amount": -10},
+            {"Category": "Withdrawal", "Service": "Memberships", "Amount": -15},
+            {"Category": "Withdrawal", "Service": "Services", "Amount": -25},
+            {"Category": "Withdrawal", "Service": "Food", "Amount": -12},
+            {"Category": "Withdrawal", "Service": "Bills", "Amount": -40},
+            {"Category": "Withdrawal", "Service": "Food", "Amount": -8},
+            {"Category": "Withdrawal", "Service": "Miscellaneous", "Amount": -60},
+            {"Category": "Withdrawal", "Service": "Food", "Amount": -9},
         ]
     }
 
