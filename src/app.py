@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template, jsonify
-from category_grouping import sort_by_month, group_by_category
+from category_grouping import sort_by_month, group_by_category, subscription_by_service
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -49,8 +49,17 @@ def upload_file():
             
             category_data = group_by_category(monthly_data)
             print(f"Category data created: {len(category_data)} categories")
-            
-            return jsonify({'success': True,'filename': filename,}), 200
+
+            subscription_data = subscription_by_service(category_data)
+            print(f"Subscription data created: {len(subscription_data[0])} subscriptions")
+
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'start_date': subscription_data[1],
+                'end_date': subscription_data[2], 
+                'subscription_data': dict(subscription_data[0])
+            }), 200
             
         except Exception as e:
             # Print full error traceback for debugging
