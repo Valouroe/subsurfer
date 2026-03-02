@@ -11,9 +11,29 @@ Tech stack:
         Git installed on your machine 
         Python 3.8 or higher 
         IDE (VS Code)
-        Basic familiarity with command line ops
+        Basic familiarity with command-line ops
 
 What works today:
+
+Front End:
+
+    - Web page displays on local server "http://127.0.0.1:5000/"
+    - CSV upload button functional
+    - Uploads CSV file to backend
+    - Receives JSON file with subscription processing from backend
+    - Processes JSON file into presentable data
+    - Displays subscription data in an interactive table
+    - Displays monthly, yearly, and total expenditures
+
+Backend:
+
+    - Server runs and integrates with frontend
+    - Receives CSV file from frontend
+    - Process the CSV and groups data by month and service category
+    - Detects subscriptions in the data
+    - Publishes processed data back to the frontend in a JSON file
+    - Unit tests for functions
+    - Integration test for file upload, processing, and file return
 
 Description:
 
