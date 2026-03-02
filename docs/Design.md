@@ -2,6 +2,9 @@ Architecture Diagram
 ---
 <img width="619" height="332" alt="Screenshot 2026-02-18 at 5 40 37 PM" src="https://github.com/user-attachments/assets/28ca80a1-9371-45f0-957d-eed8b003f18b" />
 
+Subscription Detection Flowchart
+---
+<img alt="Subscription Detection Flowchart" src="../Screenshot%202026-03-02%20at%204.49.52%E2%80%AFPM.png" />
 
 Component Breakdown
 ---
