@@ -4,7 +4,7 @@ Architecture Diagram
 
 Subscription Detection Flowchart
 ---
-<img width="272" height="1039" alt="Subscription Detection Flowchart" src="https://github.com/user-attachments/assets/c8a9ee2f-83d8-47a6-82c0-c4910858fa88" />
+<img width="272" height="1039" alt="Subscription Detection Flowchart" src="https://github.com/user-attachments/assets/830c8e11-be08-4106-bfab-921d70d14e3c" />
 
 Component Breakdown
 ---
