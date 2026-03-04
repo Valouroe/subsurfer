@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, jsonify
 from category_grouping import sort_by_month, group_by_category, subscription_by_service
 import os
+from werkzeug.exceptions import RequestEntityTooLarge
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -8,6 +9,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 template_path = os.path.join(current_dir, '..', 'templates')
 
 app = Flask(__name__, template_folder=template_path)
+
+# Limit size of uploads to 1MB
+app.config['MAX_CONTENT_LENGTH'] = 1024**2 # 1MB
 
 # Configure upload folder
 UPLOAD_FOLDER = 'uploads'
@@ -38,6 +42,13 @@ def upload_file():
     if file and allowed_file(file.filename):
         filename = file.filename
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+        # explicit size check in case MAX_CONTENT_LENGTH is bypassed
+        file.seek(0, os.SEEK_END)
+        size = file.tell()
+        file.seek(0)
+        if size > app.config['MAX_CONTENT_LENGTH']:
+            return jsonify({'error': 'File too large. Maximum size is 1 MB.'}), 413
 
         try:
             file.save(filepath)
@@ -74,5 +85,11 @@ def upload_file():
 
     return jsonify({'error': 'Invalid file type. Please upload a CSV file.'}), 400
 
+# Handle files that are larger than maximum size
+@app.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(e):
+    return jsonify({'error': 'File too large. Maximum size is 1 MB.'}), 413
+
 if __name__ == '__main__':
     app.run(debug=True)
+    
