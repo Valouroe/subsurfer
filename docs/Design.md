@@ -2,6 +2,10 @@ Architecture Diagram
 ---
 <img width="619" height="332" alt="Screenshot 2026-02-18 at 5 40 37 PM" src="https://github.com/user-attachments/assets/28ca80a1-9371-45f0-957d-eed8b003f18b" />
 
+Front-End Back-End Functionality
+---
+<img alt="Front-End Back-End Functionality" src="https://github.com/user-attachments/assets/b32dd138-3a6b-40d1-b96b-256efdc1cc5b" />
+
 Subscription Detection Flowchart
 ---
 <img width="272" height="1039" alt="Subscription Detection Flowchart" src="https://github.com/user-attachments/assets/830c8e11-be08-4106-bfab-921d70d14e3c" />
