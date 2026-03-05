@@ -64,6 +64,14 @@ def upload_file():
             subscription_data = subscription_by_service(category_data)
             print(f"Subscription data created: {len(subscription_data[0])} subscriptions")
 
+            folder = '/path/to/folder'
+
+            try:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+            except Exception as e:
+                print(f'Failed to delete {filepath}. Reason: {e}')
+
             return jsonify({
                 'success': True,
                 'filename': filename,
@@ -71,6 +79,7 @@ def upload_file():
                 'end_date': subscription_data[2], 
                 'subscription_data': dict(subscription_data[0])
             }), 200
+
             
         except Exception as e:
             # Print full error traceback for debugging
