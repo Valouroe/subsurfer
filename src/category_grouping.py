@@ -1,10 +1,12 @@
 import pandas as pd
+import numpy as np
 
 def sort_by_month(file):
     df = pd.read_csv(file)
 
     df['Date'] = pd.to_datetime(df['Date'])
     df['Month'] = df['Date'].dt.strftime('%B %Y')
+    df['Merchant Name'] = df['Merchant Name'].str.split('*').str[0]
 
     monthly_data = {}
 
@@ -28,76 +30,151 @@ def group_by_category(monthly_data):
 
     return service_map
 
+SUBSCRIPTION_KEYWORDS = ['MEMBERSHIP', 'SUBSCRIPTION', 'ANNUAL', 'PREMIUM', 'PLUS']
+
+def is_blacklisted(name):
+    name_upper = name.upper()
+    
+    # If it looks like a subscription, never blacklist it
+    if any(keyword in name_upper for keyword in SUBSCRIPTION_KEYWORDS):
+        return False
+
+    blacklist = [
+        'SHELL', 'EXXON', 'CHEVRON', 'BP', 'MOBIL', '7-ELEVEN', 'WAWA', 'SPEEDWAY',
+        'WALMART', 'TARGET', 'KROGER', 'PUBLIX', 'SAFEWAY', 'ALDI', 'WHOLEFOODS', 'COSTCO',
+        'STARBUCKS', 'DUNKIN', 'MCDONALD', 'CHIPOTLE', 'SUBWAY', 'PANERA',
+        'UBER', 'LYFT', 'MTA', 'WMATA', 'CLIPPER', 'VENTRA', 'PARKMOBILE',
+        'VENMO', 'CASH APP', 'ZELLE', 'PAYPAL', 'ATM', 'OVERDRAFT', 'DMV', 'USPS'
+    ]
+    return any(word in name_upper for word in blacklist)
+
 def subscription_by_service(service_map):
     subscriptions = {}
     pending_trackers = {} 
     history = {} 
+    habits = []
 
     all_tx = [tx for transactions in service_map.values() for tx in transactions]
     start_date = min(tx['Date'] for tx in all_tx)
     end_date = max(tx['Date'] for tx in all_tx)
 
-    # Loop through all transactions
+    # Search through all transactions
     for tx in all_tx:
         name = tx["Merchant Name"]
         date = tx["Date"]
         amount = tx["Amount"]
 
-        # If service not seen before, start tracking it
+        # Skip blacklisted merchants
+        if is_blacklisted(name):
+            habits.append(name)
+            continue
+        
+        if name in habits:
+            continue
+
+        # If we haven't seen this merchant before, start tracking it
         if name not in history:
             history[name] = [{"Date": date, "Amount": amount}]
             continue
-        
-        # Check against previous transactions for this service
+
+        # Check against previous transactions for this merchant
         for prev_tx in reversed(history[name]):
-            prev_amt = prev_tx["Amount"]
             days_diff = (date - prev_tx["Date"]).days
-
-            same_amount = (amount >= prev_amt * 0.90 and amount <= prev_amt * 1.10) # Allow 10% variance in amount
             
-            is_weekly = (6 <= days_diff <= 8) # Allow 1 day off for weekly
-            is_monthly = (27 <= days_diff <= 33) # Allow 3 days off for monthly
-            is_yearly = (360 <= days_diff <= 370) # Allow 10 days off for yearly
+            is_weekly = (6 <= days_diff <= 8)
+            is_monthly = (27 <= days_diff <= 33)
+            is_yearly = (360 <= days_diff <= 370)
 
-            # If we see a potential subscription pattern, start or update the pending tracker
-            if (is_monthly or is_weekly or is_yearly) and same_amount:
+            if is_weekly or is_monthly or is_yearly:
                 interval = "Monthly" if is_monthly else "Weekly" if is_weekly else "Yearly"
                 
-                if name not in pending_trackers:
+                if name not in pending_trackers and name not in habits:
                     pending_trackers[name] = {
                         "Payment": amount,
-                        "Total": prev_amt + amount,
+                        "Base_Amount": prev_tx["Amount"], # The original price
+                        "Hike_Detected": False,
+                        "Total": round(prev_tx["Amount"] + amount, 2),
                         "Streak": 2, 
                         "Interval": interval,
-                        "Last_Date": date # Store this for the next payment calc
+                        "Last_Date": date,
+                        "Amount_History": [prev_tx["Amount"], amount],
+                        "Interval_History": [days_diff]
                     }
                 else:
-                    pending_trackers[name]["Streak"] += 1
-                    pending_trackers[name]["Total"] += amount
-                    pending_trackers[name]['Total'] = round(pending_trackers[name]['Total'], 2) # Round to 2 decimals
-                    pending_trackers[name]["Payment"] = amount
-                    pending_trackers[name]["Last_Date"] = date
+                    tracker = pending_trackers[name]
+                    
+                    # Check for price hikes
+                    if amount > (tracker["Base_Amount"] * 1.05): 
+                        if not tracker["Hike_Detected"]:
+                            tracker["Hike_Detected"] = True
+                            tracker["Base_Amount"] = amount # Update base to the new price
+                        else:
+                            is_habit = True
+                            continue
+                    
+                    tracker["Streak"] += 1
+                    tracker["Total"] = round(tracker["Total"] + amount, 2)
+                    tracker["Payment"] = amount
+                    tracker["Amount_History"].append(amount)
+                    tracker["Interval_History"].append(days_diff)
+                    tracker["Last_Date"] = date
 
-                # Confirmation Logic
-                if is_yearly or pending_trackers[name]["Streak"] >= 3:
-                    subscriptions[name] = pending_trackers[name]
+                tracker = pending_trackers[name]
+                if (interval == 'Yearly' or tracker["Streak"] >= 3):
+                    amt_history = tracker["Amount_History"]
+                    int_history = tracker["Interval_History"]
+                    
+                    amt_std = np.std(amt_history)
+                    int_std = np.std(int_history)
+                    amt_mean = np.mean(amt_history)
+                    amt_ratio_std = amt_std / amt_mean if amt_mean > 0 else 0
+                    
+                    # Frequency check
+                    days_total = (date - history[name][0]["Date"]).days
+                    is_habit = (len(history[name]) / (max(days_total, 1) / 30) > 6)
+                    
+                    # Variance Check: 
+                    # If a Hike was detected, we allow higher amt_ratio_std 
+                    # because a price jump naturally inflates the standard deviation.
+                    variance_threshold = 0.20 if tracker["Hike_Detected"] else 0.10
+                    
+                    if not is_habit:
+                        total_tx_count = len(history[name]) + 1  # +1 for the current tx
+                        if total_tx_count > tracker["Streak"] * 1.5:
+                            is_habit = True
+
+                        if not is_habit:
+                            if interval == "Weekly":
+                                is_habit = (amt_ratio_std > variance_threshold or int_std > 3.0)
+                            elif interval == "Monthly":
+                                is_habit = (amt_ratio_std > variance_threshold or int_std > 3.0)
+                            elif interval == "Yearly":
+                                is_habit = (amt_ratio_std > variance_threshold or int_std > 10.0)
+
+                    if not is_habit:
+                        subscriptions[name] = tracker
+                    else:
+                        subscriptions.pop(name, None)
+                        print(f"Excluded {name}")
+                        habits.append(name)
                 
                 break
         
         history[name].append({"Date": date, "Amount": amount})
     
-    # Loop through subscriptions to calculate next payment date and clean up data
-    for name, data in subscriptions.items():
-        del data['Streak'] # Remove streak count from final output
+    # Final cleanup
+    for name, data in list(subscriptions.items()):
+        data.pop('Amount_History', None)
+        data.pop('Interval_History', None)
+        data.pop('Streak', None)
+        data.pop('Base_Amount', None) # Clean up internal helper
 
-        last_date = data['Last_Date'] # Get the last payment date for next payment calculation
-        
-        # Calculate next payment date based on interval
+        last_date = data['Last_Date']
         if data['Interval'] == 'Weekly':
             next_date = last_date + pd.Timedelta(days=7)
         elif data['Interval'] == 'Monthly':
             next_date = last_date + pd.DateOffset(months=1)
-        elif data['Interval'] == 'Yearly':
+        else:
             next_date = last_date + pd.DateOffset(years=1)
             
         data['Next_Payment'] = next_date.strftime('%Y-%m-%d')
