@@ -11,7 +11,6 @@ def add_subscription(data, name, frequecy, start_date, end_date, base_amount, ca
     curr = start_date + timedelta(days=random.randint(0, 6))
     hike = False
     sub = {"name": name, "amt": base_amount, "cat": category, "srv": service}
-    times = 1
 
     while curr <= end_date:
         # 5% chance of a price hike each week, but only once per subscription
@@ -35,7 +34,6 @@ def add_subscription(data, name, frequecy, start_date, end_date, base_amount, ca
             curr += relativedelta(months=1) + timedelta(days=random.choice([-1, 0, 0, 0, 1]))
         else: # Yearly
             curr += relativedelta(years=1) + timedelta(days=random.choice([-1, 0, 0, 0, 1]))
-        times += 1
 
 def generate_clean_statement():
     folder_name = "tests/test-csv"

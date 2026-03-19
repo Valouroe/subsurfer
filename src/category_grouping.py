@@ -94,8 +94,9 @@ def subscription_by_service(service_map):
                         "Base_Amount": prev_tx["Amount"], # The original price
                         "Hike_Detected": False,
                         "Total": round(prev_tx["Amount"] + amount, 2),
-                        "Streak": 2, 
+                        "Streak": 2,
                         "Interval": interval,
+                        "Streak_Start": prev_tx["Date"],
                         "Last_Date": date,
                         "Amount_History": [prev_tx["Amount"], amount],
                         "Interval_History": [days_diff]
@@ -140,16 +141,23 @@ def subscription_by_service(service_map):
                     
                     if not is_habit:
                         total_tx_count = len(history[name]) + 1  # +1 for the current tx
-                        if total_tx_count > tracker["Streak"] * 1.5:
+                        if total_tx_count >= tracker["Streak"] * 1.5:
                             is_habit = True
 
-                        if not is_habit:
-                            if interval == "Weekly":
-                                is_habit = (amt_ratio_std > variance_threshold or int_std > 3.0)
-                            elif interval == "Monthly":
-                                is_habit = (amt_ratio_std > variance_threshold or int_std > 3.0)
-                            elif interval == "Yearly":
-                                is_habit = (amt_ratio_std > variance_threshold or int_std > 10.0)
+                    if not is_habit:
+                        # If there's a large gap before the streak, the pattern is likely coincidental
+                        interval_days = 7 if interval == "Weekly" else 30 if interval == "Monthly" else 365
+                        days_before_streak = (tracker["Streak_Start"] - history[name][0]["Date"]).days
+                        if days_before_streak > interval_days * 2:
+                            is_habit = True
+
+                    if not is_habit:
+                        if interval == "Weekly":
+                            is_habit = (amt_ratio_std > variance_threshold or int_std > 3.0)
+                        elif interval == "Monthly":
+                            is_habit = (amt_ratio_std > variance_threshold or int_std > 3.0)
+                        elif interval == "Yearly":
+                            is_habit = (amt_ratio_std > variance_threshold or int_std > 3.0)
 
                     if not is_habit:
                         subscriptions[name] = tracker
@@ -167,7 +175,9 @@ def subscription_by_service(service_map):
         data.pop('Amount_History', None)
         data.pop('Interval_History', None)
         data.pop('Streak', None)
-        data.pop('Base_Amount', None) # Clean up internal helper
+        data.pop('Base_Amount', None)
+        data.pop('Hike_Detected', None)
+        data.pop('Streak_Start', None)
 
         last_date = data['Last_Date']
         if data['Interval'] == 'Weekly':

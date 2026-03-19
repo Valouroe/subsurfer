@@ -20,23 +20,36 @@ def auto_test():
     data = response.json()
 
     # Assertions check if the code actually did what we expected
-    assert data["success"] is True
-    assert data["filename"] == "generated_account.csv"
-    assert data["subscription_data"] is not None
+    try:
+        assert data["success"] is True
+        assert data["filename"] == "generated_account.csv"
+        assert data["subscription_data"] is not None
 
-    print(f"Subscription data preview:\n{json.dumps(data['subscription_data'], indent=2)}")
-    print(f"Expected subscription names: {sub_names}", end="\n\n")
+        print(f"Subscription data preview:\n{json.dumps(data['subscription_data'], indent=2)}")
+        print(f"Expected subscription names: {sub_names}", end="\n\n")
 
-    assert set(sub_names).issubset(data["subscription_data"].keys()), \
-        f"Missing: {set(sub_names) - set(data['subscription_data'].keys())}"
-    print("All expected subscriptions were correctly identified.")
+        assert set(sub_names).issubset(data["subscription_data"].keys()), \
+            f"Missing: {set(sub_names) - set(data['subscription_data'].keys())}"
+        print("All expected subscriptions were correctly identified.")
 
-    assert set(data["subscription_data"].keys()).issubset(sub_names), \
-        f"Unexpected: {set(data['subscription_data'].keys()) - set(sub_names)}"
-    print("No unexpected subscriptions were included.")
-    
-    print("Automatic Test Passed")
+        assert set(data["subscription_data"].keys()).issubset(sub_names), \
+            f"Unexpected: {set(data['subscription_data'].keys()) - set(sub_names)}"
+        print("No unexpected subscriptions were included.")
+        
+        print("Automatic Test Passed")
+        return True
+
+    except AssertionError as e:
+        print(f"Automatic Test Failed{e}")
+        return False
 
 
 if __name__ == "__main__":
-    auto_test()
+    count = 0
+    itterations = 10
+    # Run the auto test multiple times to catch any edge cases due to randomness in the generated statement
+    for i in range(itterations):
+        if auto_test() == False:
+            count += 1
+
+    print(f"Failed {count} out of {itterations} tests")
