@@ -1,4 +1,53 @@
-from src.category_grouping import group_by_category
+import io
+from src.category_grouping import sort_by_month, group_by_category
+
+def test_category_case_insensitive():
+    csv_data = """Date,Amount,Merchant Name,Service,Category
+2025-01-01,-10,Netflix,Streaming,withdrawal
+"""
+
+    file = io.StringIO(csv_data)
+
+    monthly = sort_by_month(file)
+    result = group_by_category(monthly)
+
+    assert "Streaming" in result
+
+
+def test_missing_merchant_name():
+    csv_data = """Date,Amount,Merchant Name,Service,Category
+2025-01-01,-10,,Streaming,Withdrawal
+"""
+
+    file = io.StringIO(csv_data)
+
+    monthly = sort_by_month(file)
+
+    assert len(monthly) > 0
+
+
+def test_missing_amount():
+    monthly_data = {
+        "January 2025": [
+            {"Category": "Withdrawal", "Service": "Streaming"}
+        ]
+    }
+
+    result = group_by_category(monthly_data)
+
+    assert result == {}
+
+
+def test_different_date_format():
+    csv_data = """Date,Amount,Merchant Name,Service,Category
+01/02/2025,-10,Netflix,Streaming,Withdrawal
+"""
+
+    file = io.StringIO(csv_data)
+
+    monthly = sort_by_month(file)
+
+    assert len(monthly) > 0
 
 def test_group_by_category_returns_grouped_transactions():
     monthly_data = {

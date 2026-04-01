@@ -1,34 +1,127 @@
 import pandas as pd
 import numpy as np
 
+
+
+import pandas as pd
+import numpy as np
+
 def sort_by_month(file):
     df = pd.read_csv(file)
 
-    df['Date'] = pd.to_datetime(df['Date'])
+    
+    # Handle missing columns safely
+    expected_cols = ['Date', 'Amount', 'Merchant Name', 'Service', 'Category']
+    for col in expected_cols:
+        if col not in df.columns:
+            df[col] = None
+
+    # Clean Date 
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+
+    # Drop rows with invalid dates
+    df = df.dropna(subset=['Date'])
+
+    # Clean Amount 
+    df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')
+
+    # Drop rows with missing amounts
+    df = df.dropna(subset=['Amount'])
+
+    # Normalize Category
+    df['Category'] = df['Category'].astype(str).str.strip().str.lower()
+
+    # Normalize Merchant Name
+    df['Merchant Name'] = (
+        df['Merchant Name']
+        .fillna("Unknown")
+        .astype(str)
+        .str.split('*').str[0]
+        .str.strip()
+        .str.lower()
+    )
+
+    # Normalize Service
+    df['Service'] = (
+        df['Service']
+        .fillna("Unknown")
+        .astype(str)
+        .str.strip()
+    )
+
+    # GROUP BY MONTH
     df['Month'] = df['Date'].dt.strftime('%B %Y')
-    df['Merchant Name'] = df['Merchant Name'].str.split('*').str[0]
 
     monthly_data = {}
 
     for month, group in df.groupby('Month', sort=False):
-        # Convert each month’s transactions to dictionaries
         monthly_data[month] = group.drop(columns=['Month']).to_dict(orient='records')
 
     return monthly_data
+
 
 def group_by_category(monthly_data):
     service_map = {}
 
     for month, transactions in monthly_data.items():
         for tx in transactions:
-            if tx["Category"] == "Withdrawal":
-                service = tx["Service"]
-                tx['Amount'] = abs(tx['Amount'])
+
+            
+            category = str(tx.get("Category", "")).strip().lower()
+
+            if category == "withdrawal":
+
+                
+                service = tx.get("Service", "Unknown")
+
+                
+                amount = tx.get("Amount")
+                if amount is None:
+                    continue  # skip bad data
+
+                try:
+                    amount = abs(float(amount))
+                except:
+                    continue  # skip invalid amount
+
+                tx["Amount"] = amount
+
+                # Grouping
                 if service not in service_map:
                     service_map[service] = []
+
                 service_map[service].append(tx)
 
     return service_map
+
+# def sort_by_month(file):
+#     df = pd.read_csv(file)
+
+#     df['Date'] = pd.to_datetime(df['Date'])
+#     df['Month'] = df['Date'].dt.strftime('%B %Y')
+#     df['Merchant Name'] = df['Merchant Name'].str.split('*').str[0]
+
+#     monthly_data = {}
+
+#     for month, group in df.groupby('Month', sort=False):
+#         # Convert each month’s transactions to dictionaries
+#         monthly_data[month] = group.drop(columns=['Month']).to_dict(orient='records')
+
+#     return monthly_data
+
+# def group_by_category(monthly_data):
+#     service_map = {}
+
+#     for month, transactions in monthly_data.items():
+#         for tx in transactions:
+#             if tx["Category"] == "Withdrawal":
+#                 service = tx["Service"]
+#                 tx['Amount'] = abs(tx['Amount'])
+#                 if service not in service_map:
+#                     service_map[service] = []
+#                 service_map[service].append(tx)
+
+#     return service_map
 
 SUBSCRIPTION_KEYWORDS = ['MEMBERSHIP', 'SUBSCRIPTION', 'ANNUAL', 'PREMIUM', 'PLUS']
 
