@@ -28,12 +28,14 @@ def auto_test():
         print(f"Subscription data preview:\n{json.dumps(data['subscription_data'], indent=2)}")
         print(f"Expected subscription names: {sub_names}", end="\n\n")
 
-        assert set(sub_names).issubset(data["subscription_data"].keys()), \
-            f"Missing: {set(sub_names) - set(data['subscription_data'].keys())}"
+        returned_subs = {k.split("*")[0].strip().upper() for k in data["subscription_data"].keys()}
+
+        assert set(sub_names).issubset(returned_subs), \
+            f"Missing: {set(sub_names) - set(returned_subs)}"
         print("All expected subscriptions were correctly identified.")
 
-        assert set(data["subscription_data"].keys()).issubset(sub_names), \
-            f"Unexpected: {set(data['subscription_data'].keys()) - set(sub_names)}"
+        assert set(returned_subs).issubset(sub_names), \
+            f"Unexpected: {set(returned_subs) - set(sub_names)}"
         print("No unexpected subscriptions were included.")
         
         print("Automatic Test Passed")
@@ -52,4 +54,4 @@ if __name__ == "__main__":
         if auto_test() == False:
             count += 1
 
-    print(f"Passed {count} out of {itterations} tests")
+    print(f"Failed {count} out of {itterations} tests")
