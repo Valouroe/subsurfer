@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Subsurfer | Stop Wasting Money</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root {
       --primary: #5B42F3;
@@ -379,6 +380,11 @@
         <h2 style="margin:0">Found Subscriptions</h2>
         <span style="font-size:12px; color:#888; background:#eee; padding:4px 12px; border-radius:20px;">🗓️ ${timeRangeText}</span>
       </div>
+      <div style="text-align:right; margin-bottom: 15px;">
+        <button class="upload-bt" id="download-btn" onclick="downloadPDF()">
+          <span>⬇ Download PDF</span>
+        </button>
+      </div>
       <div style="overflow-x: auto;">
         <table>
           <thead>
@@ -423,7 +429,31 @@
     document.getElementById('grand-total-display').textContent = moneyFormatter.format(lifetimeTotal);
     document.getElementById('monthly-average-display').textContent = moneyFormatter.format(monthlyBurn);
     document.getElementById('yearly-average-display').textContent = moneyFormatter.format(monthlyBurn * 12);
-  }
+  } 
+  
+  function downloadPDF() {
+  const element = document.getElementById('results');
+  const btn = document.getElementById('download-btn');
+
+  // Hide the button so it doesn't appear in the PDF
+  btn.style.display = 'none';
+
+  const options = {
+    margin:       0.5,
+    filename:     'subsurfer-results.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2 },
+    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+  };
+
+  html2pdf().set(options).from(element).save().then(() => {
+    // Show the button again after PDF is generated
+    btn.style.display = 'block';
+  });
+}
+
+  
 </script>
 
 </body>
