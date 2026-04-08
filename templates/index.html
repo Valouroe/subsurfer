@@ -195,22 +195,35 @@
       align-items: center;
     }
 
-    /* Dialog Pop-up */
+   /*  Pop-up for error or success */
     #statusPop {
       position: fixed;
-      top: 25px;
-      right: 25px;
-      margin: 0;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       border: none;
-      border-radius: 12px;
-      background: white;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-      padding: 16px 20px;
+      border-radius: 60px;
+      padding: 3px;
       z-index: 2000;
-      width: 320px;
-      display: none;
+
+      background: linear-gradient(144deg, var(--accent), var(--primary) 50%, var(--secondary));
+
     }
 
+   .popup-inner {
+     background: white;
+     border-radius: 56px;
+     padding: 20px;
+     width: 370px;
+     height: 150px;
+    
+     display: flex;
+     flex-direction: column;
+     justify-content: center;
+     align-items: center;
+     gap: 8px;
+     text-align: center;
+}
     #statusPop[open] {
       display: block;
       animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
@@ -278,6 +291,7 @@
 <div class="results" id="results"></div>
 
 <dialog id="statusPop">
+  <div class="popup-inner">
   <div style="display: flex; align-items: center; gap: 15px;">
     <div id="popIcon" style="font-size: 24px;">⚠️</div>
     <div style="flex-grow: 1;">
@@ -285,6 +299,7 @@
       <span id="popMsg" style="font-size: 13px; color: #666;">Something went wrong.</span>
     </div>
     <button style="background:none; border:none; color:#ccc; cursor:pointer;" onclick="document.getElementById('statusPop').close()">✕</button>
+  </div>
   </div>
 </dialog>
 
