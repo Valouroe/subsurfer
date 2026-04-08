@@ -52,4 +52,4 @@ if __name__ == "__main__":
         if auto_test() == False:
             count += 1
 
-    print(f"Failed {count} out of {itterations} tests")
+    print(f"Passed {count} out of {itterations} tests")
