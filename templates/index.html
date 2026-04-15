@@ -49,20 +49,20 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* Hero & Upload */
-    .hero {
+    /* The Upload/Home Page */
+    .intro {
       text-align: center;
       padding: 80px 20px 40px;
       background: linear-gradient(180deg, white 0%, var(--bg) 100%);
     }
 
-    .hero h1 {
+    .intro h1 {
       font-size: 3.5rem;
       margin-bottom: 10px;
       letter-spacing: -2px;
     }
 
-    .hero p {
+    .intro p {
       font-size: 1.2rem;
       color: #666;
       max-width: 600px;
@@ -107,7 +107,7 @@
 
     .upload-bt:hover span { background: transparent; }
 
-    /* Fun Facts Styling */
+    /* These are the facts that show up at the bottom */
     .fun-facts {
       max-width: 800px;
       margin: 20px auto 60px;
@@ -129,7 +129,6 @@
 
     .fact-card b { color: var(--primary); display: block; font-size: 1.1rem; }
 
-    /* Results Table & Cards */
     .results {
       display: none;
       max-width: 1000px;
@@ -195,11 +194,10 @@
       align-items: center;
     }
 
-   /*  Pop-up for error or success */
+   /*  Pop-up for fail or successful csv upload */
     #statusPop {
       position: fixed;
       top: 50%;
-      left: 50%;
       transform: translate(-50%, -50%);
       border: none;
       border-radius: 60px;
@@ -254,7 +252,7 @@
   <div style="color: #666; font-size: 14px;">Secure & Private</div>
 </nav>
 
-<section class="hero">
+<section class="intro">
   <h1>Detect. Manage. Save.</h1>
   <p>Stop letting "zombie" subscriptions eat your bank account. Upload your statement and see exactly where your money goes.</p>
   
@@ -357,6 +355,16 @@
   function displayResults(data) {
     const resultsDiv = document.getElementById('results');
     const subs = data.subscription_data;
+    const labels = [];
+const values = [];
+
+Object.entries(subs).forEach(([name, info]) => {
+  const totalVal = parseFloat(info.Total) || 0;
+  if (totalVal > 0) {
+    labels.push(name);
+    values.push(totalVal);
+  }
+});
     let tableRows = '';
 
     let timeRangeText = "Statement period unavailable";
@@ -422,9 +430,44 @@
         <span>Selected Total Lifetime Cost:</span>
         <span id="grand-total-display" style="font-size: 28px; font-weight: bold;">$0.00</span>
       </div>
+      <div style="width:450px; margin:0 auto;">
+  <canvas id="costPieChart"></canvas>
+</div>
     `;
+    // The div code above controls where the piechart shows up and the size. Rn it's in the middle and a decent size.
     resultsDiv.style.display = 'block';
     updateTotal();
+
+    setTimeout(() => {
+  const ctx = document.getElementById('costPieChart');
+// Making the piechart basically - don't mess with this lol
+  if (!ctx) return;
+
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: [
+          '#5B42F3',
+          '#00DDEB',
+          '#AF40FF',
+          '#FF6384',
+          '#36A2EB',
+          '#FFCE56'
+        ]
+      }]
+    },
+    options: {
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+}, 100);
   }
 
   function updateTotal() {
@@ -470,6 +513,8 @@
 
   
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </body>
 </html>
