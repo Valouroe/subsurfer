@@ -14,7 +14,7 @@ Tech stack
         IDE (VS Code)
         Basic familiarity with command-line ops
 
-What works today
+Features of our Project
 ---
 
 Front End:
@@ -24,7 +24,8 @@ Front End:
     - Uploads CSV file to backend
     - Receives JSON file with subscription processing from backend
     - Processes JSON file into presentable data
-    - Displays subscription data in an interactive table
+    - Displays subscription data in an interactive table and pie chart
+    - Displays a PDF download button where users can download their output data as a PDF
     - Displays monthly, yearly, and total expenditures
 
 Backend:
@@ -36,6 +37,7 @@ Backend:
     - Publishes processed data back to the frontend in a JSON file
     - Unit tests for functions
     - Integration test for file upload, processing, and file return
+    -Automated bank statement generator for testing
 
 Description
 ---
